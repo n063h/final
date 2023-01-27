@@ -1,0 +1,2 @@
+name: resnet
+num_classes: ${dataset.num_classes}
