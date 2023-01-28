@@ -8,13 +8,22 @@ lr: 0.01
 alpha: 0
 beta: 0
 w_augs:
-  - name: scaling
-    alpha: 0
-    beta: 0
-s_augs:
-  - name: scaling
-    alpha: 0
-    beta: 0
+  - name: jitter
+    alpha: 0.674
+    beta: 0.259
   - name: magwarp
-    alpha: 0
+    alpha: 0.02
     beta: 0
+  - name: scaling
+    alpha: 0.524
+    beta: 0.092
+s_augs:
+  - name: jitter
+    alpha: 0.674
+    beta: 0.259
+  - name: magwarp
+    alpha: 0.02
+    beta: 0
+  - name: scaling
+    alpha: 0.524
+    beta: 0.092

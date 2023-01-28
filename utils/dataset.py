@@ -1,5 +1,6 @@
 import itertools
 import numpy as np
+import torch
 from torch.utils.data.sampler import Sampler
 from collections import defaultdict,Counter
 import numpy as np
@@ -161,6 +162,25 @@ class MyDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
+
+class TransformEachDim:
+
+    def __init__(self, transform,indep=False):
+        self.transform = transform
+        self.indep=indep
+        
+    def __call__(self, _x):
+        transform=self.transform
+        if not self.indep:
+            for i in range(_x.shape[0]):
+                _x[i]=transform(_x[i])
+        else:
+            transform=np.random.choice(self.transform.transforms,_x.shape[0],replace=False)
+            for i,t in zip(range(_x.shape[0]), transform):
+                    _x[i] = t(_x[i])
+        return _x
+
+
 class TransformSubset(Dataset):
     def __init__(self, subset, transform=None):
         self.subset = subset
@@ -169,10 +189,7 @@ class TransformSubset(Dataset):
     def __getitem__(self, index):
         x, y = self.subset[index]
         if self.transform:
-            if isinstance(x, np.ndarray) and x.shape[0] == 3:
-                pass
-            else:
-                x = self.transform(x)
+            x = self.transform(x)
         return x, y
 
     def __len__(self):

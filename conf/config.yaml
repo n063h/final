@@ -5,7 +5,7 @@ entity: xlv20
 sweep_method: random
 
 seed: 42
-label_ratio: 0.99
+label_ratio: 0.01
 min_epochs: 20
 max_epochs: 50
 
@@ -21,6 +21,6 @@ dataset_dir: '${oc.env:HOME}/autodl-tmp/datasets'
 
 defaults:
   - _self_
-  - dataset: 'cls10_jitter'
-  - model: 'resnet1d'
-  - arch: 'pi'
+  - dataset: '3cls10ww'
+  - model: '3resnet1d'
+  - arch: 'tri2'

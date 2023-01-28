@@ -30,16 +30,16 @@ def main(conf : DictConfig) -> None:
     )
     conf=easydict.EasyDict(conf_dict)
     conf.device=get_pytorch_device()
-    conf.dataset.w_augs=build_augs(conf.dataset.w_augs,conf.dataset.alpha,conf.dataset.beta)
-    conf.dataset.s_augs=build_augs(conf.dataset.s_augs,conf.dataset.alpha,conf.dataset.beta)
+    conf.dataset.w_augs=build_augs(conf.dataset.w_augs)
+    conf.dataset.s_augs=build_augs(conf.dataset.s_augs)
     dataset:LightningDataModule=import_module('datasets.'+conf.dataset.name).Dataset(conf)
     model:nn.Module=import_module('models.'+conf.model.name).Net(conf,conf.device)
     arch=import_module('arch.'+conf.arch.name).Arch(model=model,conf=conf,device=conf.device)
     arch.fit(dataset)
     arch.test(dataset)
     wandb.finish()
-
-
+    
+    
     
 if __name__ == "__main__":
     main()

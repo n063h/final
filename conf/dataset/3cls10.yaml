@@ -1,7 +1,27 @@
-name: cls10
+name: 3cls10
 num_classes: 10
 axis: 
 sup_size: 1024
 unsup_size: 1024
 eval_size: 1024
 lr: 0.01
+w_augs:
+  - name: jitter
+    alpha: 0.674
+    beta: 0.259
+  - name: magwarp
+    alpha: 0.02
+    beta: 0
+  - name: scaling
+    alpha: 0.524
+    beta: 0.092
+s_augs:
+  - name: jitter
+    alpha: 0.674
+    beta: 0.259
+  - name: magwarp
+    alpha: 0.02
+    beta: 0
+  - name: scaling
+    alpha: 0.524
+    beta: 0.092

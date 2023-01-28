@@ -1,12 +1,11 @@
-name: cls10ws
+name: 3cls10ww
 num_classes: 10
-axis: 0
-sup_size: 2048
-unsup_size: 2048
-eval_size: 2048
+axis: 
+sup_size: 1024
+unsup_size: 1024
+eval_size: 1024
 lr: 0.01
-alpha: 0
-beta: 0
+indep: False
 w_augs:
   - name: jitter
     alpha: 0.674

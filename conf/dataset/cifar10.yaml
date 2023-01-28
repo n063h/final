@@ -4,3 +4,5 @@ sup_size: 1024
 unsup_size: 1024
 eval_size: 1024
 lr: 0.1
+w_augs:
+s_augs:
