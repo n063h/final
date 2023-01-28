@@ -15,14 +15,14 @@ class Dataset(BaseDataset):
     def setup(self,stage):
         weak = transforms.Compose([
             ToTensor(),
-            *self.conf.w_augs
+            *self.conf.dataset.w_augs
         ])
         eval_transform = transforms.Compose([
             ToTensor(),
         ])
         if stage=='fit':
             data,targets=read_npy(self.conf.dataset_dir+'/cls10_train')
-            if (axis:=self.conf.axis) is not None:
+            if (axis:=self.conf.dataset.axis) is not None:
                 data=data[:,axis,:]
             trainset_all = MyDataset(data,targets)
             trainset,valset=uniform_split(trainset_all, [0.9,0.1])
@@ -34,5 +34,5 @@ class Dataset(BaseDataset):
         
     
     def train_dataloader(self):
-        train_loader=DataLoader(self.trainset, batch_size=self.conf.sup_size, num_workers=self.num_workers, shuffle=True)
+        train_loader=DataLoader(self.trainset, batch_size=self.conf.dataset.sup_size, num_workers=self.num_workers, shuffle=True)
         return train_loader

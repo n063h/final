@@ -1068,8 +1068,8 @@ def get_model(M, L, C,num_classes):
     )
     return model_18
 
-def Net(conf:Config):
-    return [get_model(4, 61, 3,conf.num_classes) for _ in range(3)]
+def Net(conf:Config,device):
+    return [get_model(4, 61, 3,conf.dataset.num_classes).to(device) for _ in range(3)]
 #
 # def get_model(M, L, C):
 #     model_18 = ResNet_c(

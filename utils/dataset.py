@@ -144,10 +144,10 @@ def uniform_split(dataset,length,shuffle=False):
         return uniform_split_dataset(dataset,length,shuffle)
     
 class MyDataset(Dataset):
-    def __init__(self, data,targets,transfom=None):
+    def __init__(self, data,targets,transform=None):
         self.data=data
         self.targets=targets
-        self.transfom=transfom
+        self.transform=transform
             
     def __getitem__(self, index):
         x,y=self.data[index],self.targets[index]

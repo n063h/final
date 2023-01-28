@@ -1,27 +1,24 @@
 # custom config
-name: test
-project: temp
+name: ${dataset.name}_${model.name}_${arch.name}
+project: final
 entity: xlv20
-sup_size: 128
-unsup_size: 128
-eval_size: 128
 
-label_ratio: 0.1
-min_epochs: 10
-max_epochs: 20
-lr: 0.1
+label_ratio: 0.01
+min_epochs: 20
+max_epochs: 40
 
 semi: True
-num_workers: 1
+num_workers: 8
 device: cpu
+resume: False
 
-default_root_dir: '/home/lvhang/autodl-tmp/checkpoints'
-log_dir: '/home/lvhang/tf-logs'
-dataset_dir: '/home/lvhang/autodl-tmp/datasets'
+default_root_dir: '/root/autodl-tmp/checkpoints'
+log_dir: '/root/tf-logs'
+dataset_dir: '/root/autodl-tmp/datasets'
 
 
 defaults:
   - _self_
-  - dataset: 'cifar10'
-  - model: 'resnet'
-  - arch: 'nosemi'
+  - dataset: '3cls10'
+  - model: '3resnet1d'
+  - arch: 'tri'

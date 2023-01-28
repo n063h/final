@@ -40,10 +40,10 @@ class BaseDataset():
         
     
     def train_dataloader(self):
-        return DataLoader(self.trainset, batch_size=self.conf.sup_size, num_workers=self.num_workers, shuffle=True)
+        return DataLoader(self.trainset, batch_size=self.conf.dataset.sup_size, num_workers=self.num_workers, shuffle=True)
 
     def val_dataloader(self):
-        return DataLoader(self.valset, batch_size=self.conf.eval_size, num_workers=self.num_workers, shuffle=False)
+        return DataLoader(self.valset, batch_size=self.conf.dataset.eval_size, num_workers=self.num_workers, shuffle=False)
 
     def test_dataloader(self):
-        return DataLoader(self.testset, batch_size=self.conf.eval_size, num_workers=self.num_workers, shuffle=False)
+        return DataLoader(self.testset, batch_size=self.conf.dataset.eval_size, num_workers=self.num_workers, shuffle=False)

@@ -1,0 +1,6 @@
+name: cifar10ww
+num_classes: 10
+sup_size: 2048
+unsup_size: 2048
+eval_size: 2048
+lr: 0.1

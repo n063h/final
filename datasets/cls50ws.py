@@ -28,7 +28,7 @@ class Dataset(Cls50):
         
         if stage=='fit':
             data,targets=read_npy(self.conf.dataset_dir+'/train')
-            if (axis:=self.conf.axis) is not None:
+            if (axis:=self.conf.dataset.axis) is not None:
                 data=data[:,axis,:]
             trainset_all = MyDataset(data,targets)
             trainset,valset=uniform_split(trainset_all, [0.9,0.1])
@@ -44,8 +44,8 @@ class Dataset(Cls50):
         
     
     def train_dataloader(self):
-        sup_sampler=BatchSampler(RandomSampler(self.supset),batch_size=self.conf.sup_size)
-        sup_loader=DataLoader(self.supset, batch_size=self.conf.sup_size, num_workers=self.num_workers, batch_sampler=sup_sampler)
-        unsup_sampler=BatchSampler(RandomSampler(self.unsupset),batch_size=self.conf.unsup_size)
-        unsup_loader=DataLoader(self.unsupset, batch_size=self.conf.unsup_size, num_workers=self.num_workers,batch_sampler=unsup_sampler)
+        sup_sampler=BatchSampler(RandomSampler(self.supset),batch_size=self.conf.dataset.sup_size)
+        sup_loader=DataLoader(self.supset, batch_size=self.conf.dataset.sup_size, num_workers=self.num_workers, batch_sampler=sup_sampler)
+        unsup_sampler=BatchSampler(RandomSampler(self.unsupset),batch_size=self.conf.dataset.unsup_size)
+        unsup_loader=DataLoader(self.unsupset, batch_size=self.conf.dataset.unsup_size, num_workers=self.num_workers,batch_sampler=unsup_sampler)
         return [sup_loader,unsup_loader]

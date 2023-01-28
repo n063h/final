@@ -50,8 +50,8 @@ if __name__ == '__main__':
             for (augfunc,alpha,bate) in group_aug: # every aug testcase
                 name=conf.name
                 conf.name=conf.name+f"_{augname}_{alpha}_{bate}"
-                conf.w_augs=[BaseTransform(augfunc,alpha,bate)]
-                conf.s_augs=[BaseTransform(augfunc,alpha,bate)]
+                conf.dataset.w_augs=[BaseTransform(augfunc,alpha,bate)]
+                conf.dataset.s_augs=[BaseTransform(augfunc,alpha,bate)]
                 main(conf)
                 try:
                     main(conf)

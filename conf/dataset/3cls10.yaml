@@ -1,6 +1,6 @@
-name: cls50
-num_classes: 50
-axis: 0
+name: cls10
+num_classes: 10
+axis: 
 sup_size: 1024
 unsup_size: 1024
 eval_size: 1024

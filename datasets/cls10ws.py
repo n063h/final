@@ -15,11 +15,11 @@ class Dataset(Cls10):
     def setup(self,stage):
         weak = transforms.Compose([
             ToTensor(),
-            *self.conf.w_augs
+            *self.conf.dataset.w_augs
         ])
         strong = transforms.Compose([
             ToTensor(),
-            *self.conf.s_augs
+            *self.conf.dataset.s_augs
         ])
         unsup_transform = wstwice(weak, strong)
         eval_transform = transforms.Compose([
@@ -28,7 +28,7 @@ class Dataset(Cls10):
         
         if stage=='fit':
             data,targets=read_npy(self.conf.dataset_dir+'/cls10_train')
-            if (axis:=self.conf.axis) is not None:
+            if (axis:=self.conf.dataset.axis) is not None:
                 data=data[:,axis,:]
             trainset_all = MyDataset(data,targets)
             trainset,valset=uniform_split(trainset_all, [0.9,0.1])
@@ -45,7 +45,7 @@ class Dataset(Cls10):
     
     def train_dataloader(self):
         sup_sampler=RandomSampler(self.supset)
-        sup_loader=DataLoader(self.supset, batch_size=self.conf.sup_size, num_workers=self.num_workers, sampler=sup_sampler)
+        sup_loader=DataLoader(self.supset, batch_size=self.conf.dataset.sup_size, num_workers=self.num_workers, sampler=sup_sampler)
         unsup_sampler=RandomSampler(self.unsupset)
-        unsup_loader=DataLoader(self.unsupset, batch_size=self.conf.unsup_size, num_workers=self.num_workers,sampler=unsup_sampler)
+        unsup_loader=DataLoader(self.unsupset, batch_size=self.conf.dataset.unsup_size, num_workers=self.num_workers,sampler=unsup_sampler)
         return [sup_loader,unsup_loader]

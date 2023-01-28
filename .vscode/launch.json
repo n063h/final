@@ -8,11 +8,11 @@
             "name": "Python: Current File",
             "type": "python",
             "env": {
-                "PYTHONPYTH":"/home/lvhang/final"
+                "PYTHONPYTH":"${workspaceFolder}"
             },
-            "python": "/home/lvhang/miniconda3/envs/py38/bin/python",
+            "python": "/root/miniconda3/envs/py38/bin/python",
             "request": "launch",
-            "program": "/home/lvhang/final/test.py",
+            "program": "${workspaceFolder}/test.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }

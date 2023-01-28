@@ -45,6 +45,6 @@ class Dataset(Cifar100):
         
     
     def train_dataloader(self):
-        sup_loader=DataLoader(self.supset, batch_size=self.conf.sup_size, num_workers=self.num_workers, shuffle=True)
-        unsup_loader=DataLoader(self.unsupset, batch_size=self.conf.unsup_size, num_workers=self.num_workers, shuffle=True)
+        sup_loader=DataLoader(self.supset, batch_size=self.conf.dataset.sup_size, num_workers=self.num_workers, shuffle=True)
+        unsup_loader=DataLoader(self.unsupset, batch_size=self.conf.dataset.unsup_size, num_workers=self.num_workers, shuffle=True)
         return [sup_loader,unsup_loader]
