@@ -2,15 +2,17 @@
 name: ${dataset.name}_${model.name}_${arch.name}_${label_ratio}
 project: final
 entity: xlv20
+sweep_method: random
 
 seed: 42
-label_ratio: 0.01
+label_ratio: 0.99
 min_epochs: 20
-max_epochs: 50
+max_epochs: 30
 
 semi: True
 num_workers: 8
 resume: False
+
 
 default_root_dir: '${oc.env:HOME}/autodl-tmp/checkpoints'
 log_dir: '${oc.env:HOME}/tf-logs'
@@ -19,6 +21,6 @@ dataset_dir: '${oc.env:HOME}/autodl-tmp/datasets'
 
 defaults:
   - _self_
-  - dataset: '3cls10'
-  - model: '3resnet1d'
-  - arch: 'tri'
+  - dataset: 'cls10_jitter'
+  - model: 'resnet1d'
+  - arch: 'pi'

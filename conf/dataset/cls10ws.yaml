@@ -5,5 +5,16 @@ sup_size: 2048
 unsup_size: 2048
 eval_size: 2048
 lr: 0.01
-w_augs: []
-s_augs: []
+alpha: 0
+beta: 0
+w_augs:
+  - name: scaling
+    alpha: 0
+    beta: 0
+s_augs:
+  - name: scaling
+    alpha: 0
+    beta: 0
+  - name: magwarp
+    alpha: 0
+    beta: 0

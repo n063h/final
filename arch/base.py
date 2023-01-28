@@ -90,7 +90,11 @@ class BaseModel():
         else:
             sup_loader,unlab_loader=train_dataloader
             idx=0
-            for batch in tzip(cycle(sup_loader), unlab_loader, total =len(unlab_loader)):
+            if len(sup_loader)<len(unlab_loader):
+                tz=tzip(cycle(sup_loader), unlab_loader, total =len(unlab_loader))
+            else:
+                tz=tzip(sup_loader, cycle(unlab_loader), total =len(sup_loader))
+            for batch in tz:
                 output=self.training_step(batch,idx,optimizers)
                 self.on_train_batch_end(output,batch,idx)
                 idx+=1

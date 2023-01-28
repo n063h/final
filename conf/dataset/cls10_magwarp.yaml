@@ -1,14 +1,14 @@
 name: cls10ww
 num_classes: 10
 axis: 0
-sup_size: 2048
-unsup_size: 2048
-eval_size: 2048
+sup_size: 1024
+unsup_size: 1024
+eval_size: 1024
 lr: 0.01
 alpha: 0
 beta: 0
 w_augs:
-  - name: scaling
+  - name: magwarp
     alpha: 0
     beta: 0
 s_augs:
