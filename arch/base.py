@@ -34,9 +34,11 @@ class BaseModel():
         m,o,l=checkpoint['models'],checkpoint['optimizers'],checkpoint['lr_schedulers']
         if hasattr(self,'model'):
             self.model.load_state_dict(m[0])
+            self.model.to(conf.device)
         else:
             for mo,state in zip(self.models,m):
                 mo.load_state_dict(state)
+                mo.to(conf.device)
         for opt,state in zip(optimizers,o):
             opt.load_state_dict(state)
         for ls,state in zip(lr_schedulers,l):
