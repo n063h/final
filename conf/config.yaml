@@ -1,5 +1,5 @@
 # custom config
-name: ${dataset.name}_${model.name}_${arch.name}
+name: ${dataset.name}_${model.name}_${arch.name}_${label_ratio}
 project: final
 entity: xlv20
 
@@ -9,7 +9,6 @@ max_epochs: 40
 
 semi: True
 num_workers: 8
-device: cpu
 resume: False
 
 default_root_dir: '/root/autodl-tmp/checkpoints'
