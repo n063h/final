@@ -7,7 +7,7 @@ sweep_method: random
 seed: 42
 label_ratio: 0.99
 min_epochs: 20
-max_epochs: 30
+max_epochs: 50
 
 semi: True
 num_workers: 8

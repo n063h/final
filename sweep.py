@@ -60,8 +60,8 @@ if __name__ == "__main__":
         'metric': {'goal': 'maximize', 'name': 'val_acc'},
         'parameters': 
         {
-            'alpha': {'max': 1, 'min': -1},
-            'beta': {'max': 1, 'min': -1}
+            'alpha': {'max': 1.0, 'min': 0.001},
+            'beta': {'max': 1.0, 'min': 0.001}
         }
     }
     sweep_id = wandb.sweep(sweep=sweep_configuration, project=conf_cp.project)
