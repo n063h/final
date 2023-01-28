@@ -8,8 +8,7 @@ def get_lightning_device():
         accelerator,devices='gpu',1
     return {'accelerator':accelerator,'devices':devices}
 
-def get_pytorch_device():
-    device='cpu'
-    if torch.cuda.is_available():
-        device='cuda'
-    return torch.device(device)
+def get_pytorch_device(i=0):
+    if torch.cuda.device_count() >= i + 1:
+        return torch.device(f'cuda:{i}')
+    return torch.device('cpu')

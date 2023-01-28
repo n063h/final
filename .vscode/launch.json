@@ -8,7 +8,8 @@
             "name": "Python: Current File",
             "type": "python",
             "env": {
-                "PYTHONPYTH":"${workspaceFolder}"
+                "PYTHONPYTH":"${workspaceFolder}",
+                "CUDA_VISIBLE_DEVICES":"0"
             },
             "python": "/root/miniconda3/envs/py38/bin/python",
             "request": "launch",

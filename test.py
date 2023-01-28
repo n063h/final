@@ -4,6 +4,7 @@ from pytorch_lightning import LightningDataModule
 from omegaconf import DictConfig, OmegaConf
 from utils.device import get_pytorch_device
 from utils.nir_aug import BaseTransform, DA_MagWarp, DA_Scaling
+from utils.seed import set_seed
 from utils.seperate import dash_print
 from torch import nn
 
@@ -17,7 +18,7 @@ augs={
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(conf : DictConfig) -> None:
-    torch.manual_seed(2)
+    set_seed(conf.seed)
     conf_dict=OmegaConf.to_container(conf, resolve=True)
     dash_print(conf_dict)
     wandb.init(

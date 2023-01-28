@@ -3,6 +3,7 @@ name: ${dataset.name}_${model.name}_${arch.name}_${label_ratio}
 project: final
 entity: xlv20
 
+seed: 42
 label_ratio: 0.01
 min_epochs: 20
 max_epochs: 40
