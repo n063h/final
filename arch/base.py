@@ -30,7 +30,7 @@ class BaseModel():
     
     
     def resume(self,conf,optimizers,lr_schedulers):
-        checkpoint = torch.load(os.path.join(conf.default_root_dir,conf.name))
+        checkpoint = torch.load(os.path.join(conf.default_root_dir,f"{conf.name}_best"))
         m,o,l=checkpoint['models'],checkpoint['optimizers'],checkpoint['lr_schedulers']
         if hasattr(self,'model'):
             self.model.load_state_dict(m[0])
@@ -79,7 +79,7 @@ class BaseModel():
                     if hasattr(self,'model'):
                         self.models=[self.model]
                     state={'models':[m.state_dict() for m in self.models],'optimizers':[o.state_dict() for o in self.optimizers],'lr_schedulers':[l.state_dict() for l in lr_schedulers]}
-                    torch.save(state, os.path.join(conf.default_root_dir,conf.name))
+                    torch.save(state, os.path.join(conf.default_root_dir,f"{conf.name}_best"))
                 print("best",self.best)
             
     def training_epoch(self,train_dataloader,optimizers,epoch):
@@ -191,15 +191,19 @@ class BaseModel():
         self.configure_optimizers()
         optimizers,lr_schedulers=self.optimizers,self.lr_schedulers
         
-        if conf.resume:
-            self.resume(conf,optimizers,lr_schedulers)
-            
+        print("current model testing")
         self.on_test_start()
         for idx,batch in tenumerate(test_dataloader,total=len(test_dataloader)):
             self.test_step(batch,idx)
         self.on_test_end()
-
-
+        
+        print("best model testing")
+        self.resume(conf,optimizers,lr_schedulers)
+        self.on_test_start()
+        for idx,batch in tenumerate(test_dataloader,total=len(test_dataloader)):
+            self.test_step(batch,idx)
+        self.on_test_end()
+        
     @torch.no_grad()
     def test_step(self, batch, batch_idx):
         x, y = batch

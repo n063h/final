@@ -6,11 +6,11 @@ entity: xlv20
 seed: 42
 label_ratio: 0.01
 min_epochs: 20
-max_epochs: 40
+max_epochs: 50
 
 semi: True
 num_workers: 8
-resume: True
+resume: False
 
 default_root_dir: '${oc.env:HOME}/autodl-tmp/checkpoints'
 log_dir: '${oc.env:HOME}/tf-logs'
