@@ -55,4 +55,4 @@ def crush_test(conf : DictConfig) -> None:
 
     
 if __name__ == "__main__":
-    main()
+    crush_test()

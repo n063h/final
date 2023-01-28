@@ -19,6 +19,6 @@ dataset_dir: '${oc.env:HOME}/autodl-tmp/datasets'
 
 defaults:
   - _self_
-  - dataset: 'cls10ws'
-  - model: 'resnet1d'
-  - arch: 'fixmatch'
+  - dataset: '3cls10'
+  - model: '3resnet1d'
+  - arch: 'tri'
