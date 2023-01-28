@@ -18,7 +18,7 @@ class Arch(BaseModel):
         metrics=get_multiclass_acc_metrics(conf.dataset.num_classes,device)
         self.train_metrics=[metrics.clone(prefix=f'train{i}_') for i in range(3)]
         self.val_metrics=[metrics.clone(prefix=f'val{i}_') for i in range(3)]
-        
+        self.test_metrics=[metrics.clone(prefix=f'test{i}_') for i in range(3)]
         self.timer=Timer()
         
     def forward(self,x):
@@ -95,12 +95,31 @@ class Arch(BaseModel):
             m=max(m,metrics[f"val{i}_acc"].item())
         return m
         
+        
+    @torch.no_grad()
+    def on_test_start(self):
+        print("——————测试开始——————")
+        self.timer.update()
+        for metrics,model in zip(self.test_metrics,self.models):
+            metrics.reset()
+            model.eval()
+        
     def test_step(self, batch, batch_idx):
         x, y = batch
-        p = self.forward(x)
-        for i in range(3):
-            li = F.cross_entropy(p[i],y)
-            wandb.log({f'test{i}_loss':li})
+        device=self.device
+        x,y=x.to(device),y.to(device)
+        pred = self.forward(x)
+        for m,p in zip(self.test_metrics,pred):
+            m.update(p,y)
+        
+    @torch.no_grad()
+    def on_test_end(self):
+        diff=self.timer.update()
+        print("test_time",diff)
+        for m in self.test_metrics:
+            metrics=m.compute()
+            wandb.log(metrics)
+            print(m)
         
     def predict_step(self, batch, batch_idx):
         x, y = batch

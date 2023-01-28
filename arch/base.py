@@ -173,6 +173,7 @@ class BaseModel():
         
         return metrics['val_acc'].item()
 
+
     def on_test_start(self):
         self.model.eval()
         print("——————测试开始——————")
@@ -186,7 +187,13 @@ class BaseModel():
         dataset.prepare_data()
         dataset.setup('test')
         test_dataloader=dataset.test_dataloader()
+        conf=self.conf
+        self.configure_optimizers()
+        optimizers,lr_schedulers=self.optimizers,self.lr_schedulers
         
+        if conf.resume:
+            self.resume(conf,optimizers,lr_schedulers)
+            
         self.on_test_start()
         for idx,batch in tenumerate(test_dataloader,total=len(test_dataloader)):
             self.test_step(batch,idx)

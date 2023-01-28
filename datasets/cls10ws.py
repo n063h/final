@@ -40,6 +40,8 @@ class Dataset(Cls10):
             self.valset=TransformSubset(valset,eval_transform)
         if stage=='test':
             data,targets=read_npy(self.conf.dataset_dir+'/cls10_test')
+            if (axis:=self.conf.dataset.axis) is not None:
+                data=data[:,axis,:]
             self.testset = MyDataset(data,targets,eval_transform)
         
     

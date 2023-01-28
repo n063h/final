@@ -35,10 +35,23 @@ def main(conf : DictConfig) -> None:
     dataset:LightningDataModule=import_module('datasets.'+conf.dataset.name).Dataset(conf)
     model:nn.Module=import_module('models.'+conf.model.name).Net(conf,conf.device)
     arch=import_module('arch.'+conf.arch.name).Arch(model=model,conf=conf,device=conf.device)
-    arch.fit(dataset)
+    # arch.fit(dataset)
     arch.test(dataset)
     wandb.finish()
 
+@hydra.main(version_base=None, config_path="conf", config_name="config")
+def crush_test(conf : DictConfig) -> None:
+    set_seed(conf.seed)
+    conf_dict=OmegaConf.to_container(conf, resolve=True)
+    dash_print(conf_dict)
+    conf=easydict.EasyDict(conf_dict)
+    conf.device=get_pytorch_device()
+    conf.dataset.w_augs=[BaseTransform(*augs['magwarp'][0])]
+    conf.dataset.s_augs=[BaseTransform(*augs['magwarp'][0]),BaseTransform(*augs['scaling'][0])]
+    dataset:LightningDataModule=import_module('datasets.'+conf.dataset.name).Dataset(conf)
+    model:nn.Module=import_module('models.'+conf.model.name).Net(conf,conf.device)
+    arch=import_module('arch.'+conf.arch.name).Arch(model=model,conf=conf,device=conf.device)
+    arch.test(dataset)
 
     
 if __name__ == "__main__":

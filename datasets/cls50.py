@@ -31,6 +31,8 @@ class Dataset(BaseDataset):
             
         if stage=='test':
             data,targets=read_npy(self.conf.dataset_dir+'/cls50_test')
+            if (axis:=self.conf.dataset.axis) is not None:
+                data=data[:,axis,:]
             self.testset = MyDataset(data,targets,eval_transform)
         
     

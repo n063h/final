@@ -16,7 +16,7 @@
             ],
             "python": "/root/miniconda3/envs/py38/bin/python",
             "request": "launch",
-            "program": "${workspaceFolder}/train.py",
+            "program": "${workspaceFolder}/test.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }
