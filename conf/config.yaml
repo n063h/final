@@ -10,11 +10,11 @@ max_epochs: 40
 
 semi: True
 num_workers: 8
-resume: False
+resume: True
 
-default_root_dir: '/root/autodl-tmp/checkpoints'
-log_dir: '/root/tf-logs'
-dataset_dir: '/root/autodl-tmp/datasets'
+default_root_dir: '${oc.env:HOME}/autodl-tmp/checkpoints'
+log_dir: '${oc.env:HOME}/tf-logs'
+dataset_dir: '${oc.env:HOME}/autodl-tmp/datasets'
 
 
 defaults:

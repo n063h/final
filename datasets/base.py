@@ -33,14 +33,17 @@ class BaseDataset():
         if stage=='fit':
             trainset_all = []
             trainset,valset=uniform_split(trainset_all, [0.9,0.1])
-            self.trainset=TransformSubset(trainset,None)
+            # split sup/unsup from trainset
+            label_ratio=self.conf.label_ratio
+            _supset,_=uniform_split(trainset, [label_ratio,1-label_ratio])
+            self.supset=TransformSubset(_supset,None)
             self.valset=TransformSubset(valset,None)
         if stage=='test':
             self.testset = []
         
     
     def train_dataloader(self):
-        return DataLoader(self.trainset, batch_size=self.conf.dataset.sup_size, num_workers=self.num_workers, shuffle=True)
+        return DataLoader(self.supset, batch_size=self.conf.dataset.sup_size, num_workers=self.num_workers, shuffle=True)
 
     def val_dataloader(self):
         return DataLoader(self.valset, batch_size=self.conf.dataset.eval_size, num_workers=self.num_workers, shuffle=False)

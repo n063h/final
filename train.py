@@ -36,6 +36,7 @@ def main(conf : DictConfig) -> None:
     model:nn.Module=import_module('models.'+conf.model.name).Net(conf,conf.device)
     arch=import_module('arch.'+conf.arch.name).Arch(model=model,conf=conf,device=conf.device)
     arch.fit(dataset)
+    arch.test(dataset)
     wandb.finish()
     
 if __name__ == "__main__":

@@ -24,8 +24,23 @@ class BaseModel():
         self.train_metrics=metrics.clone(prefix='train_')
         self.val_metrics=metrics.clone(prefix='val_')
         self.ema_metrics=metrics.clone(prefix='ema_')
-        
+        self.test_metrics=metrics.clone(prefix='test_')
+        self.test_ema_metrics=metrics.clone(prefix='test_ema_')
         self.timer=Timer()
+    
+    
+    def resume(self,conf,optimizers,lr_schedulers):
+        checkpoint = torch.load(os.path.join(conf.default_root_dir,conf.name))
+        m,o,l=checkpoint['models'],checkpoint['optimizers'],checkpoint['lr_schedulers']
+        if hasattr(self,'model'):
+            self.model.load_state_dict(m[0])
+        else:
+            for mo,state in zip(self.models,m):
+                mo.load_state_dict(state)
+        for opt,state in zip(optimizers,o):
+            opt.load_state_dict(state)
+        for ls,state in zip(lr_schedulers,l):
+            ls.load_state_dict(state)
     
     def fit(self,dataset:LightningDataModule):
         dataset.prepare_data()
@@ -37,17 +52,7 @@ class BaseModel():
         optimizers,lr_schedulers=self.optimizers,self.lr_schedulers
         
         if conf.resume:
-            checkpoint = torch.load(os.path.join(conf.default_root_dir,conf.name))
-            m,o,l=checkpoint['models'],checkpoint['optimizers'],checkpoint['lr_schedulers']
-            if hasattr(self,'model'):
-                self.model.load_state_dict(m[0])
-            else:
-                for mo,state in zip(self.models,m):
-                    mo.load_state_dict(state)
-            for opt,state in zip(optimizers,o):
-                opt.load_state_dict(state)
-            for ls,state in zip(lr_schedulers,l):
-                ls.load_state_dict(state)
+            self.resume(conf,optimizers,lr_schedulers)
                 
         self.best={'val_acc':0,'epoch':0}
         for epoch in range(conf.max_epochs):
@@ -166,21 +171,47 @@ class BaseModel():
         
         return metrics['val_acc'].item()
 
+    def on_test_start(self):
+        self.model.eval()
+        print("——————测试开始——————")
+        self.timer.update()
+        self.test_metrics.reset()
+        self.test_ema_metrics.reset()
         
+
+    
+    def test(self,dataset:LightningDataModule):
+        dataset.prepare_data()
+        dataset.setup('test')
+        test_dataloader=dataset.test_dataloader()
         
+        self.on_test_start()
+        for idx,batch in tenumerate(test_dataloader,total=len(test_dataloader)):
+            self.test_step(batch,idx)
+        self.on_test_end()
+
+
     @torch.no_grad()
     def test_step(self, batch, batch_idx):
         x, y = batch
         device=self.device
         x,y=x.to(device),y.to(device)
         pred = self.model(x)
-        test_loss = F.cross_entropy(pred, y)
+        self.test_metrics.update(pred,y)
         
         self.ema.apply_shadow()
         ema_pred = self.model(x)
-        ema_loss = F.cross_entropy(ema_pred, y)
+        self.test_ema_metrics.update(ema_pred,y)
         self.ema.restore()
-        wandb.log({"test_loss": test_loss, "ema_test_loss": ema_loss})
+        
+    def on_test_end(self):
+        diff=self.timer.update()
+        print("test_time",diff)
+        metrics=self.test_metrics.compute()
+        test_ema_metrics=self.test_ema_metrics.compute()
+        wandb.log(metrics)
+        wandb.log(test_ema_metrics)
+        print(metrics,test_ema_metrics) 
     
     @torch.no_grad()
     def predict_step(self, batch, batch_idx):
