@@ -23,4 +23,4 @@ defaults:
   - _self_
   - dataset: '3cls10ww'
   - model: '3resnet1d'
-  - arch: 'tri2'
+  - arch: 'tri1'

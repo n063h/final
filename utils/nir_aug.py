@@ -29,11 +29,14 @@ def GenerateRandomCurves(X, sigma=0.1, knot=4):
 def DA_MagWarp(X, sigma=0.05,knot=4):
     return (X.reshape((228,1)) * GenerateRandomCurves(X.reshape((228,1)), sigma,knot)).reshape((228))
 
+def do_nothing(x, sigma=0.05,knot=4):
+    return x
 
 aug_fn={
     'jitter':DA_Jitter,
     'scaling':DA_Scaling,
-    'magwarp':DA_MagWarp
+    'magwarp':DA_MagWarp,
+    'do_nothing':do_nothing
 }
 
 def build_augs(augs,_alpha=None,_beta=None):
