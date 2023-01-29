@@ -41,7 +41,8 @@ aug_fn={
 
 def build_augs(augs,_alpha=None,_beta=None):
     res=[]
-    for aug in augs:
+    
+    for aug in (augs or []):
         name,alpha,beta=aug.name,aug.alpha,aug.beta
         if _alpha:
             alpha=_alpha

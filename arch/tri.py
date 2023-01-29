@@ -24,6 +24,7 @@ class Arch(BaseModel):
     def forward(self,x):
         m1,m2,m3=self.models
         x1,x2,x3=x[:,0,:],x[:,1,:],x[:,2,:]
+        # x1,x2,x3=x[:,0,:],x[:,0,:],x[:,0,:]
         return m1(x1),m2(x2),m3(x3)
     
     def on_train_epoch_start(self,epoch) -> None:
@@ -33,20 +34,18 @@ class Arch(BaseModel):
         self.timer.update()
     
     def training_step(self, batch, batch_idx,optimizers):
-        x, y = batch
+        (x, y),_ = batch
         device=self.device
         x,y=x.to(device),y.to(device)
         p = self.forward(x)
-        loss=[]
         for i in range(3):
             li = F.cross_entropy(p[i], y)
             wandb.log({f'train{i}_loss':li})
-            loss.append(li)
             optimizers[i].zero_grad()
             li.backward()
             optimizers[i].step()
         
-        return {'loss':loss,'pred':p,'y':y}
+        return {'loss':[],'pred':p,'y':y}
     
     def on_train_batch_end(self, outputs, batch, batch_idx):
         pred,y=outputs['pred'],outputs['y']
@@ -75,6 +74,7 @@ class Arch(BaseModel):
             self.val_metrics[i].reset()
             self.models[i].eval()
     
+    @torch.no_grad()
     def validation_step(self, batch, batch_idx):
         x, y = batch
         device=self.device
@@ -84,16 +84,18 @@ class Arch(BaseModel):
             li=F.cross_entropy(pred[i], y)
             self.val_metrics[i].update(pred[i], y)
             wandb.log({f'val{i}_loss':li})
-        
+    
+    @torch.no_grad()
     def on_validation_epoch_end(self) -> None:
         diff=self.timer.update()
         print("val_epoch_time",diff)
-        m=0
+        m=[]
         for i in range(3):
             metrics=self.val_metrics[i].compute()
             wandb.log(metrics)
-            m=max(m,metrics[f"val{i}_acc"].item())
-        return m
+            m.append(metrics[f"val{i}_acc"].item())
+        print(m)
+        return max(m)
         
         
     @torch.no_grad()
@@ -103,7 +105,8 @@ class Arch(BaseModel):
         for metrics,model in zip(self.test_metrics,self.models):
             metrics.reset()
             model.eval()
-        
+    
+    @torch.no_grad()
     def test_step(self, batch, batch_idx):
         x, y = batch
         device=self.device
@@ -119,7 +122,7 @@ class Arch(BaseModel):
         for m in self.test_metrics:
             metrics=m.compute()
             wandb.log(metrics)
-            print(m)
+            print(metrics)
         
     def predict_step(self, batch, batch_idx):
         x, y = batch

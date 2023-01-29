@@ -116,6 +116,7 @@ class Arch(_Arch):
         self.optimizers=[o1,o2,o3]
         self.lr_schedulers=[l1,l2,l3]
 
+    @torch.no_grad()
     def on_validation_epoch_start(self,epoch) -> None:
         self.timer.update()
         print("——————第 {} 轮验证开始——————".format(epoch + 1))
@@ -123,6 +124,7 @@ class Arch(_Arch):
             self.val_metrics[i].reset()
             self.models[i].eval()
     
+    @torch.no_grad()
     def validation_step(self, batch, batch_idx):
         x, y = batch
         device=self.device
@@ -132,7 +134,8 @@ class Arch(_Arch):
             li=F.cross_entropy(pred[i], y)
             self.val_metrics[i].update(pred[i], y)
             wandb.log({f'val{i}_loss':li})
-        
+    
+    @torch.no_grad()
     def on_validation_epoch_end(self) -> None:
         diff=self.timer.update()
         print("val_epoch_time",diff)
@@ -151,7 +154,8 @@ class Arch(_Arch):
         for metrics,model in zip(self.test_metrics,self.models):
             metrics.reset()
             model.eval()
-        
+    
+    @torch.no_grad()
     def test_step(self, batch, batch_idx):
         x, y = batch
         device=self.device
