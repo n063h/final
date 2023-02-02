@@ -11,7 +11,22 @@ from utils.ramps import exp_rampup
 
 
 rampup=exp_rampup(30)
-# pi
+
+def compute_kl_loss( p, q):
+    
+    p_loss = F.kl_div(F.log_softmax(p, dim=-1), F.softmax(q, dim=-1), reduction='none')
+    q_loss = F.kl_div(F.log_softmax(q, dim=-1), F.softmax(p, dim=-1), reduction='none')
+
+    # You can choose whether to use function "sum" and "mean" depending on your task
+    p_loss = p_loss.sum()
+    q_loss = q_loss.sum()
+
+    loss = (p_loss + q_loss) / 2
+    return loss
+
+# pi + R-Drop
+# CE + KL / MSE + KL
+# use all sets of p/q to compute MSE loss and Hx
 class Arch(_Arch):
         
     def forward(self,x):
@@ -26,9 +41,13 @@ class Arch(_Arch):
         sup_x,sup_y=sup_x.to(device),sup_y.to(device)
         
         p10,p11,p12 = self.forward(sup_x)
-        # l0,l1,l2 are the loss of ith model, currently CE
-        l0,l1,l2 = F.cross_entropy(p10, sup_y),F.cross_entropy(p11, sup_y),F.cross_entropy(p12, sup_y)
-        h0,h1,h2 = F.softmax(p10, dim=1),F.softmax(p11, dim=1),F.softmax(p12, dim=1)
+        q10,q11,q12 = self.forward(sup_x)
+        # l0,l1,l2 are the loss of ith model, currently CE+KL
+        l0=(F.cross_entropy(p10, sup_y)+F.cross_entropy(q10, sup_y))/2+compute_kl_loss(p10,q10)
+        l1=(F.cross_entropy(p11, sup_y)+F.cross_entropy(q11, sup_y))/2+compute_kl_loss(p11,q11)
+        l2=(F.cross_entropy(p12, sup_y)+F.cross_entropy(q12, sup_y))/2+compute_kl_loss(p12,q12)
+        
+        h0,h1,h2 = (F.softmax(p10, dim=1)+F.softmax(q10,dim=1))/2,(F.softmax(p11, dim=1)+F.softmax(q11, dim=1))/2,(F.softmax(p12, dim=1)+F.softmax(q12, dim=1))/2
         prob0,label0=torch.max(h0,dim=1)
         prob1,label1=torch.max(h1,dim=1)
         prob2,label2=torch.max(h2,dim=1)
@@ -39,21 +58,29 @@ class Arch(_Arch):
                 mask=torch.where(label==i)[0]
                 self.h[idx,i]+=prob[mask].sum()
                 self.hc[idx,i]+=len(mask)
-                
+        # up10   up20
+        # uq10   uq20
         if self.conf.semi:
             unsup_x1,unsup_x2=unsup_x1.to(device),unsup_x2.to(device)
             with torch.no_grad():
                 up10,up11,up12 = self.forward(unsup_x1)
+                uq10,uq11,uq12 = self.forward(unsup_x1)
                 up20,up21,up22 = self.forward(unsup_x2)
+                uq20,uq21,uq22 = self.forward(unsup_x2)
                 up10,up11,up12,up20,up21,up22=up10.detach(),up11.detach(),up12.detach(),up20.detach(),up21.detach(),up22.detach()
+                uq10,uq11,uq12,uq20,uq21,uq22=uq10.detach(),uq11.detach(),uq12.detach(),uq20.detach(),uq21.detach(),uq22.detach()
+            #umse0,umse1,umse2 are mse loss of unsup_x1,unsup_x2
             
-            # smse0,smse1,smse2 are mse loss of sup_x1,sup_x2, umse0,umse1,umse2 are mse loss of unsup_x1,unsup_x2
+            ukl0=(compute_kl_loss(up10,uq10)+compute_kl_loss(up20,uq20))/2
+            ukl1=(compute_kl_loss(up11,uq11)+compute_kl_loss(up21,uq21))/2
+            ukl2=(compute_kl_loss(up12,uq12)+compute_kl_loss(up22,uq22))/2
+            umse0=(F.mse_loss(up10,up20)+F.mse_loss(up10,uq20)+F.mse_loss(uq10,up20)+F.mse_loss(uq10,uq20))/4
+            umse1=(F.mse_loss(up11,up21)+F.mse_loss(up11,uq21)+F.mse_loss(uq11,up21)+F.mse_loss(uq11,uq21))/4
+            umse2=(F.mse_loss(up12,up22)+F.mse_loss(up12,uq22)+F.mse_loss(uq12,up22)+F.mse_loss(uq12,uq22))/4
             r=rampup(self.current_epoch)
-            umse0,umse1,umse2=F.mse_loss(up10,up20),F.mse_loss(up11,up21),F.mse_loss(up12,up22)
-            
-            l0+=umse0*r
-            l1+=umse1*r
-            l2+=umse2*r
+            l0+=(umse0+ukl0)*r
+            l1+=(umse1+ukl1)*r
+            l2+=(umse2+ukl2)*r
         
         loss=[l0,l1,l2]
         for i,l in zip(range(3),loss):

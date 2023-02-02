@@ -154,14 +154,14 @@ class BaseModel():
         pred = self.model(x)
         val_loss = F.cross_entropy(pred, y)
         self.val_metrics.update(pred,y)
-        self.log({'val_loss':val_loss})
+        self.log({'val_loss':val_loss.item()})
         
         self.ema.apply_shadow()
         ema_pred = self.model(x)
         ema_loss = F.cross_entropy(ema_pred, y)
         self.ema_metrics.update(ema_pred,y)
         self.ema.restore()
-        self.log({'ema_loss':ema_loss})
+        self.log({'ema_loss':ema_loss.item()})
         
     @torch.no_grad()
     def on_validation_epoch_end(self) -> None:

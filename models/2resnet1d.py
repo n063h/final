@@ -2,7 +2,7 @@ import numpy as np
 from collections import Counter
 from tqdm import tqdm
 from matplotlib import pyplot as plt
-from sklearn.metrics import classification_report 
+
 
 import torch
 import torch.nn as nn
@@ -298,4 +298,4 @@ def get_model(num_classes,use_do=False,use_bn=False):
 def Net(conf,device):
     if conf.dataset.axis is None:
         return [get_model(conf.dataset.num_classes,conf.dataset.dropout,conf.dataset.bn).to(device) for _ in range(3)]
-    return get_model(4, 61, 3,conf.dataset.num_classes,conf.dataset.dropout,conf.dataset.bn).to(device)
+    return get_model(conf.dataset.num_classes,conf.dataset.dropout,conf.dataset.bn).to(device)

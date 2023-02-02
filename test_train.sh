@@ -10,7 +10,7 @@ python train.py max_epochs=1  name=test_train dataset=cifar model=resnet arch=fi
 
 
 echo "testing single head nir name=test_train"
-python train.py max_epochs=1  name=test_train dataset=nir dataset.axis=0 model=resnet1d arch=nosemi label_ratio=0.01 notes=test_train_nosemi_nir10
+# python train.py max_epochs=1  name=test_train dataset=nir dataset.axis=0 model=resnet1d arch=nosemi label_ratio=0.01 notes=test_train_nosemi_nir10
 python train.py max_epochs=1  name=test_train dataset=nir dataset.axis=0 model=resnet1d model.name=2resnet1d arch=nosemi label_ratio=0.01 notes=test_train_nosemi_nir10_2resnet1d
 
 python train.py max_epochs=1  name=test_train dataset=nir dataset.axis=0 dataset.num_classes=50 model=resnet1d arch=nosemi label_ratio=0.01 notes=test_train_nosemi_nir50
@@ -19,9 +19,9 @@ python train.py max_epochs=1  name=test_train dataset=nir dataset.axis=0 model=r
 
 
 echo "testing three heads nir name=test_train"
-python train.py max_epochs=1  name=test_train dataset=nir model=resnet1d arch=tri label_ratio=0.01 semi=False notes=test_train_nosemi_3nir10
-python train.py max_epochs=1  name=test_train dataset=nir dataset.num_classes=50 model=resnet1d arch=nosemi label_ratio=0.01 semi=False notes=test_train_nosemi_3nir50
+python train.py max_epochs=1  name=test_train dataset=nir model=resnet1d arch=tri label_ratio=0.01 semi=False notes=test_train_tri_nosemi_3nir10
+python train.py max_epochs=1  name=test_train dataset=nir dataset.num_classes=50 model=resnet1d arch=tri label_ratio=0.01 semi=False notes=test_train_tri_nosemi_3nir50
 
 python train.py max_epochs=1  name=test_train dataset=nir model=resnet1d arch=tri arch.name=tri1 label_ratio=0.01 notes=test_train_tri1_3nir10
 python train.py max_epochs=1  name=test_train dataset=nir model=resnet1d arch=tri arch.name=tri2 label_ratio=0.01 notes=test_train_tri2_3nir10
-python train.py max_epochs=1  name=test_train dataset=nir model=resnet1d arch=tri arch.name=tri3 label_ratio=0.01 notes=test_train_tri2_3nir10
+python train.py max_epochs=1  name=test_train dataset=nir model=resnet1d arch=tri arch.name=tri3 label_ratio=0.01 notes=test_train_tri3_3nir10

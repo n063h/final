@@ -1,3 +1,4 @@
+from typing import List
 import itertools
 import numpy as np
 import torch
@@ -97,7 +98,7 @@ def grouper(iterable, n):
     return zip(*args)
 
 
-def uniform_split_subset(dataset,indice,length,shuffle=False):
+def uniform_split_subset(dataset:Subset,indice,length,shuffle=False):
     full_targets,indices=np.array(dataset.targets),np.array(indice)
     sub_targets=full_targets[indices]
     unique_labels=np.unique(sub_targets)
@@ -117,7 +118,7 @@ def uniform_split_subset(dataset,indice,length,shuffle=False):
         subsets.append(Subset(dataset, indice))
     return subsets
 
-def uniform_split_dataset(dataset,length,shuffle=True):
+def uniform_split_dataset(dataset:Dataset,length,shuffle=True):
     targets=np.array(dataset.targets)
     subsets,unique_labels,used_label_num=[],np.unique(targets),defaultdict(int)
     for ratio in length:
@@ -134,7 +135,7 @@ def uniform_split_dataset(dataset,length,shuffle=True):
         subsets.append(Subset(dataset, indice))
     return subsets
 
-def uniform_split(dataset,length,shuffle=False):
+def uniform_split(dataset,length,shuffle=False)->List[Subset]:
     if len(dataset)==0: 
         return [[]]*len(length)
     if isinstance(dataset,Subset):
@@ -145,7 +146,7 @@ def uniform_split(dataset,length,shuffle=False):
         return uniform_split_subset(dataset,indice,length,shuffle)
     else:
         return uniform_split_dataset(dataset,length,shuffle)
-    
+
 class MyDataset(Dataset):
     def __init__(self, data,targets,transform=None):
         self.data=data

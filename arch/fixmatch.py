@@ -31,7 +31,7 @@ class Arch(BaseModel):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        return {'loss':loss.item(),'pred':sup_pred.item(),'y':sup_y}
+        return {'loss':loss.item(),'pred':sup_pred,'y':sup_y}
     
     def pred_to_onehot(self,pred):
         return F.one_hot(pred.argmax(dim=1),num_classes=self.conf.dataset.num_classes)

@@ -21,6 +21,9 @@ class Arch(BaseModel):
         self.test_metrics=[metrics.clone(prefix=f'test{i}_') for i in range(3)]
         self.timer=Timer()
         self.log=print if conf.name=='test_train' else wandb.log
+        self.h=torch.zeros(3,conf.dataset.num_classes).to(device)
+        self.hc=torch.zeros(3,conf.dataset.num_classes).to(device)
+        self.h_last=torch.zeros(3,conf.dataset.num_classes).to(device)
         
     def forward(self,x):
         m1,m2,m3=self.models
@@ -54,6 +57,10 @@ class Arch(BaseModel):
             pi,mi=pred[i],self.train_metrics[i]
             metrics=mi(pi,y)
             self.log(metrics)
+        self.h_last=self.h/self.hc
+        self.h_last[self.h_last.isnan()]=0
+        self.h=torch.zeros_like(self.h).to(self.device)
+        self.hc=torch.zeros_like(self.hc).to(self.device)
         
     
     def configure_optimizers(self):

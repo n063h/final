@@ -43,7 +43,7 @@ class BaseDataset():
             label_ratio=self.conf.label_ratio
             _supset,_unsupset=uniform_split(trainset, [label_ratio,1-label_ratio])
             self.supset=TransformSubset(_supset,self.sup_transform)
-            self.unsupset=TransformSubset(_unsupset,self.unsup_transform)
+            self.unsupset=TransformSubset(trainset,self.unsup_transform)
             self.valset=TransformSubset(valset,self.eval_transform)
         if stage=='test':
             self.testset = TransformSubset(self.testset_all,self.eval_transform)

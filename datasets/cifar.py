@@ -1,6 +1,6 @@
 from utils.base import Config
 from utils.image_aug import RandAugmentMC
-from utils.dataset import TransformWeakStrong as wstwice,TransformBaseWeakStrong as bwstwice, uniform_split
+from utils.dataset import TransformWeakStrong as wstwice
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader,Dataset,Subset
     

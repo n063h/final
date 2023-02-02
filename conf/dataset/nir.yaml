@@ -29,5 +29,5 @@ s_augs:
   - name: scaling
     alpha: 0.524
     beta: 0.092
-dropout: False
+dropout: True
 bn: True

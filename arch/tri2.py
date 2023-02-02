@@ -21,11 +21,11 @@ class Arch(_Arch):
     
     
     def training_step(self, batch, batch_idx,optimizers):
-        ((sup_x1,sup_x2),sup_y), ((unsup_x1,unsup_x2),unsup_y) = batch
+        (sup_x,sup_y), ((unsup_x1,unsup_x2),unsup_y) = batch
         device=self.device
-        sup_x1,sup_x2,sup_y=sup_x1.to(device),sup_x2.to(device),sup_y.to(device)
+        sup_x,sup_y=sup_x.to(device),sup_y.to(device)
         
-        p10,p11,p12 = self.forward(sup_x1)
+        p10,p11,p12 = self.forward(sup_x)
         # l0,l1,l2 are the loss of ith model, currently CE
         l0,l1,l2 = F.cross_entropy(p10, sup_y),F.cross_entropy(p11, sup_y),F.cross_entropy(p12, sup_y)
         h0,h1,h2 = F.softmax(p10, dim=1),F.softmax(p11, dim=1),F.softmax(p12, dim=1)
@@ -41,18 +41,15 @@ class Arch(_Arch):
                 self.hc[idx,i]+=len(mask)
                 
         if self.conf.semi:
-            unsup_x1,unsup_x2,unsup_y=unsup_x1.to(device),unsup_x2.to(device),unsup_y.to(device)
+            unsup_x1,unsup_x2=unsup_x1.to(device),unsup_x2.to(device)
             with torch.no_grad():
-                p20,p21,p22 = self.forward(sup_x2)
                 up10,up11,up12 = self.forward(unsup_x1)
                 up20,up21,up22 = self.forward(unsup_x2)
                 up10,up11,up12,up20,up21,up22=up10.detach(),up11.detach(),up12.detach(),up20.detach(),up21.detach(),up22.detach()
             
-            # smse0,smse1,smse2 are mse loss of sup_x1,sup_x2, umse0,umse1,umse2 are mse loss of unsup_x1,unsup_x2
-            r=rampup(self.current_epoch)
-            smse0,smse1,smse2=F.mse_loss(p10,p20)*r,F.mse_loss(p11,p21)*r,F.mse_loss(p12,p22)*r
-            umse0,umse1,umse2=F.mse_loss(up10,up20)*r,F.mse_loss(up11,up21)*r,F.mse_loss(up12,up22)*r
-            mse0,mse1,mse2=smse0+umse0,smse1+umse1,smse2+umse2
+            # umse0,umse1,umse2 are mse loss of unsup_x1,unsup_x2
+            
+            umse0,umse1,umse2=F.mse_loss(up10,up20),F.mse_loss(up11,up21),F.mse_loss(up12,up22)
             
             # current model dominated by other 2 models 4 mean hx 
             T=self.conf.arch.temperature
@@ -69,10 +66,10 @@ class Arch(_Arch):
             ce0=torch.mean(F.cross_entropy(up10,ulabel0,reduction='none')*mask0)
             ce1=torch.mean(F.cross_entropy(up11,ulabel1,reduction='none')*mask1)
             ce2=torch.mean(F.cross_entropy(up12,ulabel2,reduction='none')*mask2)
-            
-            l0+=mse0+ce0
-            l1+=mse1+ce1
-            l2+=mse2+ce2
+            r=rampup(self.current_epoch)
+            l0+=(umse0+ce0)*r
+            l1+=(umse1+ce1)*r
+            l2+=(umse2+ce2)*r
         
         loss=[l0,l1,l2]
         for i,l in zip(range(3),loss):
@@ -82,6 +79,6 @@ class Arch(_Arch):
             optimizers[i].step()
                 
         
-        return {'loss':loss.item(),'pred':[p10.item(),p11.item(),p12.item()],'y':sup_y}
+        return {'loss':loss,'pred':[p10,p11,p12],'y':sup_y}
     
     

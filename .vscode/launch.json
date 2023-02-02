@@ -13,9 +13,13 @@
             },
             "args": [
                 "project=temp",
-                "name=test_train"
+                "name=test_train",
+                "dataset=cifar",
+                "model=resnet",
+                "arch=pi",
+                "notes=test_train_pi_cifar10"
             ],
-            "python": "/home/lvhang/miniconda3/envs/py38/bin/python",
+            "python": "/root/miniconda3/envs/py38/bin/python",
             "request": "launch",
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
