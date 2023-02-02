@@ -283,11 +283,11 @@ class ResNet1D(nn.Module):
 def get_model(num_classes,use_do=False,use_bn=False):
     return ResNet1D(
             in_channels=1, 
-            base_filters=128, # 64 for ResNet1D, 352 for ResNeXt1D
+            base_filters=64, # 64 for ResNet1D, 352 for ResNeXt1D
             kernel_size=16, 
             stride=2, 
             groups=32, 
-            n_block=48, 
+            n_block=16, 
             n_classes=num_classes, 
             downsample_gap=6, 
             increasefilter_gap=12, 

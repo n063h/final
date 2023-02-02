@@ -139,8 +139,8 @@ class ResNet_d(nn.Module):
         # self.fc1 = nn.Linear(2304, 256)
         self.fc1 = nn.Linear(6912, 256)
         self.relu2 = nn.ReLU(inplace=True)
-        self.dp=nn.Dropout(p=0.5)
-        self.fc11 = nn.Linear(256, num_classes)
+        self.dp=nn.Dropout(p=0.2)
+        self.fc3 = nn.Linear(256, num_classes)
 
         # self.dropout1 = nn.Dropout(p=0.3)
 
@@ -273,11 +273,12 @@ class ResNet_d(nn.Module):
         # print(embd.size())
         # embd = self.down(embd)
 
-        pred1 = self.fc1(embd)
-        pred1 = self.relu2(pred1)
-        pred1 = self.dp(pred1)
+        x = self.fc1(embd)
+        x = self.relu2(x)
         
-        out = self.fc11(pred1)
+        x = self.dp(x)
+
+        out = self.fc3(x)
 
         return out
 

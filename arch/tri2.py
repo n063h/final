@@ -10,7 +10,7 @@ from utils.metrics import get_multiclass_acc_metrics
 from utils.ramps import exp_rampup
 
 
-rampup=exp_rampup(30)
+rampup=exp_rampup(40)
 # pi + mixed_prob psudo-label
 class Arch(_Arch):
 

@@ -6,7 +6,7 @@ from .base import BaseModel
 import torch.nn.functional as F
 
 
-rampup=exp_rampup(30)
+rampup=exp_rampup(40)
 
 class Arch(BaseModel):
     def training_step(self, batch, batch_idx,optimizers):

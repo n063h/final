@@ -14,10 +14,11 @@
             "args": [
                 "project=temp",
                 "name=test_train",
-                "dataset=cifar",
-                "model=resnet",
-                "arch=pi",
-                "notes=test_train_pi_cifar10"
+                "dataset=nir",
+                "model=resnet1d",
+                "model.name=2resnet1d",
+                "arch=tri",
+                "arch.name=tri4",
             ],
             "python": "/root/miniconda3/envs/py38/bin/python",
             "request": "launch",

@@ -6,4 +6,3 @@ eval_size: 1024
 lr: 0.1
 w_augs:
 s_augs:
-aug_type: w_ww
