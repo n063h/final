@@ -1,1 +1,2 @@
 name: nosemi
+aug_type: w_ww  # can be {e/w}_{ew/ww/ws} 

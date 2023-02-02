@@ -3,7 +3,7 @@ from itertools import cycle
 import torch,os
 from  torch import nn
 import torch.nn.functional as F
-from pytorch_lightning import LightningDataModule, LightningModule
+from datasets.base import BaseDataset
 import wandb
 from utils.base import Config, Timer
 from utils.ema import EMA
@@ -19,6 +19,7 @@ class BaseModel():
         self.ema.register()
         self.conf=conf
         self.device=device
+        self.log=print if conf.name=='test_train' else wandb.log
         
         metrics=get_multiclass_acc_metrics(conf.dataset.num_classes,device)
         self.train_metrics=metrics.clone(prefix='train_')
@@ -44,7 +45,8 @@ class BaseModel():
         for ls,state in zip(lr_schedulers,l):
             ls.load_state_dict(state)
     
-    def fit(self,dataset:LightningDataModule):
+    def fit(self,dataset:BaseDataset):
+        dataset.prepare_transforms()
         dataset.prepare_data()
         dataset.setup('fit')
         train_dataloader=dataset.train_dataloader()
@@ -83,21 +85,17 @@ class BaseModel():
                 print("best",self.best)
             
     def training_epoch(self,train_dataloader,optimizers,epoch):
-        if not isinstance(train_dataloader,list):
-            for idx,batch in tenumerate(train_dataloader, total =len(train_dataloader)):
-                output=self.training_step(batch,idx,optimizers)
-                self.on_train_batch_end(output,batch,idx)
+        sup_loader,unlab_loader=train_dataloader
+        idx=0
+        if len(sup_loader)<len(unlab_loader):
+            tz=tzip(cycle(sup_loader), unlab_loader, total =len(unlab_loader))
         else:
-            sup_loader,unlab_loader=train_dataloader
-            idx=0
-            if len(sup_loader)<len(unlab_loader):
-                tz=tzip(cycle(sup_loader), unlab_loader, total =len(unlab_loader))
-            else:
-                tz=tzip(sup_loader, cycle(unlab_loader), total =len(sup_loader))
-            for batch in tz:
-                output=self.training_step(batch,idx,optimizers)
-                self.on_train_batch_end(output,batch,idx)
-                idx+=1
+            tz=tzip(sup_loader, cycle(unlab_loader), total =len(sup_loader))
+        for idx,batch in enumerate(tz):
+            output=self.training_step(batch,idx,optimizers)
+            self.on_train_batch_end(output,batch,idx)
+            # idx+=1
+            
         
         
     def validation_epoch(self,val_dataloader,epoch):
@@ -110,7 +108,7 @@ class BaseModel():
         self.timer.update()
     
     def training_step(self, batch, batch_idx,optimizers):
-        x, y = batch
+        (x, y),_ = batch
         optimizer=optimizers[0]
         device=self.device
         x,y=x.to(device),y.to(device)
@@ -119,13 +117,13 @@ class BaseModel():
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        wandb.log({'train_loss':loss})
+        self.log({'train_loss':loss})
         return {'loss':loss,'pred':pred,'y':y}
     
     def on_train_batch_end(self, outputs, batch, batch_idx):
         pred,y=outputs['pred'],outputs['y']
         metrics=self.train_metrics(pred,y)
-        wandb.log(metrics)
+        self.log(metrics)
         self.ema.update()
         
     def on_train_epoch_end(self,lr_schedulers) -> None:
@@ -150,20 +148,20 @@ class BaseModel():
     
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
-        x, y = batch
+        x,y = batch
         device=self.device
         x,y=x.to(device),y.to(device)
         pred = self.model(x)
         val_loss = F.cross_entropy(pred, y)
         self.val_metrics.update(pred,y)
-        wandb.log({'val_loss':val_loss})
+        self.log({'val_loss':val_loss})
         
         self.ema.apply_shadow()
         ema_pred = self.model(x)
         ema_loss = F.cross_entropy(ema_pred, y)
         self.ema_metrics.update(ema_pred,y)
         self.ema.restore()
-        wandb.log({'ema_loss':ema_loss})
+        self.log({'ema_loss':ema_loss})
         
     @torch.no_grad()
     def on_validation_epoch_end(self) -> None:
@@ -171,8 +169,8 @@ class BaseModel():
         print("val_epoch_time",diff)
         metrics=self.val_metrics.compute()
         ema_metrics=self.ema_metrics.compute()
-        wandb.log(metrics)
-        wandb.log(ema_metrics)
+        self.log(metrics)
+        self.log(ema_metrics)
         print(metrics,ema_metrics,end='')
         
         return metrics['val_acc'].item()
@@ -187,7 +185,8 @@ class BaseModel():
         
 
     
-    def test(self,dataset:LightningDataModule):
+    def test(self,dataset:BaseDataset):
+        dataset.prepare_transforms()
         dataset.prepare_data()
         dataset.setup('test')
         test_dataloader=dataset.test_dataloader()
@@ -226,8 +225,8 @@ class BaseModel():
         print("test_time",diff)
         metrics=self.test_metrics.compute()
         test_ema_metrics=self.test_ema_metrics.compute()
-        wandb.log(metrics)
-        wandb.log(test_ema_metrics)
+        self.log(metrics)
+        self.log(test_ema_metrics)
         print(metrics,test_ema_metrics) 
     
     @torch.no_grad()

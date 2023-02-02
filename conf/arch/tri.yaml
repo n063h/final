@@ -1,3 +1,4 @@
 name: tri
 usp_weight: 1
 threshold: 0.95
+aug_type: e_ww  # can be {e/w}_{ew/ww/ws} 

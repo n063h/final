@@ -4,7 +4,7 @@ from pytorch_lightning import LightningDataModule
 from omegaconf import DictConfig, OmegaConf
 from utils.device import get_pytorch_device
 from utils.nir_aug import BaseTransform, DA_MagWarp, DA_Scaling,DA_Jitter, build_augs
-from utils.seed import set_seed
+from pytorch_lightning import seed_everything
 from utils.seperate import dash_print
 from torch import nn
 
@@ -20,7 +20,7 @@ from torch import nn
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def init_conf(_conf):
-    set_seed(_conf.seed)
+    seed_everything(_conf.seed)
     global conf_cp
     conf_cp=easydict.EasyDict(OmegaConf.to_container(_conf, resolve=True))
 

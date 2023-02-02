@@ -1069,7 +1069,9 @@ def get_model(M, L, C,num_classes):
     return model_18
 
 def Net(conf:Config,device):
-    return [get_model(4, 61, 3,conf.dataset.num_classes).to(device) for _ in range(3)]
+    if conf.dataset.axis is None:
+        return [get_model(4, 61, 3,conf.dataset.num_classes).to(device) for _ in range(3)]
+    return get_model(4, 61, 3,conf.dataset.num_classes).to(device)
 #
 # def get_model(M, L, C):
 #     model_18 = ResNet_c(

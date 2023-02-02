@@ -1,10 +1,12 @@
-name: cls10ws
+name: nir
 num_classes: 10
-axis: 0
 sup_size: 2048
 unsup_size: 2048
 eval_size: 2048
 lr: 0.01
+
+axis:
+dim_aug: random # dim_aug can be all, random, same or different
 alpha: 0
 beta: 0
 w_augs:
@@ -27,3 +29,5 @@ s_augs:
   - name: scaling
     alpha: 0.524
     beta: 0.092
+dropout: False
+bn: True

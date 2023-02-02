@@ -135,6 +135,8 @@ def uniform_split_dataset(dataset,length,shuffle=True):
     return subsets
 
 def uniform_split(dataset,length,shuffle=False):
+    if len(dataset)==0: 
+        return [[]]*len(length)
     if isinstance(dataset,Subset):
         # if is subset, restore subset to full-dataset while keep indice stay subset
         indice=np.array(dataset.indices)
@@ -164,18 +166,26 @@ class MyDataset(Dataset):
 
 
 class TransformEachDim:
-
-    def __init__(self, transform,indep=False):
-        self.transform = transform
-        self.indep=indep
+    # dim_aug can be all, random, same or different
+    def __init__(self, base_transform,addition_transform,dim_aug='random'):
+        self.base_transform = base_transform
+        self.addition_transform = addition_transform
+        self.dim_aug = dim_aug
         
     def __call__(self, _x):
-        transform=self.transform
-        if not self.indep:
+        base,addition=self.base_transform,self.addition_transform
+        if self.dim_aug=='all':
+            transform=transforms.Compose([base,addition])
             for i in range(_x.shape[0]):
                 _x[i]=transform(_x[i])
         else:
-            transform=np.random.choice(self.transform.transforms,_x.shape[0],replace=False)
+            if self.dim_aug=='different':
+                assert _x.shape[0]<=len(addition)
+                transform=np.random.choice(addition,_x.shape[0],replace=False)
+            elif self.dim_aug=='same':
+                transform=np.random.choice(addition,1).tolist()*_x.shape[0]
+            elif self.dim_aug=='random':
+                transform=np.random.choice(addition,_x.shape[0],replace=True)
             for i,t in zip(range(_x.shape[0]), transform):
                     _x[i] = t(_x[i])
         return _x

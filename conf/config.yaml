@@ -22,6 +22,6 @@ dataset_dir: '${oc.env:HOME}/autodl-tmp/datasets'
 
 defaults:
   - _self_
-  - dataset: '3cls10'
-  - model: '3resnet1d'
+  - dataset: 'nir'
+  - model: 'resnet1d'
   - arch: 'tri'
