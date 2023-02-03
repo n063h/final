@@ -1,0 +1,130 @@
+from datetime import datetime
+import numpy as np
+import torch
+from  torch import nn
+import torch.nn.functional as F
+import wandb
+from arch.tri import Arch as _Arch
+from utils.base import Config, Timer
+from utils.ema import EMA
+from utils.metrics import get_multiclass_acc_metrics
+from utils.ramps import exp_rampup
+
+
+rampup=exp_rampup(40)
+
+def one_hot(targets, nClass):
+    logits = torch.zeros(targets.size(0), nClass).to(targets.device)
+    return logits.scatter_(1,targets.unsqueeze(1),1)
+
+def mixup_one_target(x, y, alpha=1.0, device='cuda', is_bias=False):
+    """Returns mixed inputs, mixed targets, and lambda
+    """
+    if alpha > 0:
+        lam = np.random.beta(alpha, alpha)
+    else:
+        lam = 1
+    if is_bias: lam = max(lam, 1-lam)
+
+    index = torch.randperm(x.size(0)).to(device)
+
+    mixed_x = lam*x + (1-lam)*x[index, :]
+    mixed_y = lam*y + (1-lam)*y[index]
+    return mixed_x, mixed_y, lam
+
+def compute_kl_loss( p, q):
+    
+    p_loss = F.kl_div(F.log_softmax(p, dim=-1), F.softmax(q, dim=-1), reduction='none')
+    q_loss = F.kl_div(F.log_softmax(q, dim=-1), F.softmax(p, dim=-1), reduction='none')
+
+    # You can choose whether to use function "sum" and "mean" depending on your task
+    p_loss = p_loss.mean()
+    q_loss = q_loss.mean()
+
+    loss = (p_loss + q_loss) / 2
+    return loss
+
+
+
+# pi + + mixed_prob psudo-label
+# CE + MSE + MSE
+# use sum prob of p/q to compute MSE loss 
+class Arch(_Arch):
+        
+    def forward(self,x):
+        m1,m2,m3=self.models
+        x1,x2,x3=x[:,0,:],x[:,1,:],x[:,2,:]
+        return m1(x1),m2(x2),m3(x3)
+    
+    
+    def training_step(self, batch, batch_idx,optimizers):
+        (sup_x,sup_y), ((un_x1,un_x2),_) = batch
+        device=self.device
+        sup_x,sup_y=sup_x.to(device),sup_y.to(device)
+        un_x1,un_x2=un_x1.to(device),un_x2.to(device)
+        optimizer=optimizers[0]
+        T=self.conf.arch.temperature
+        with torch.no_grad():
+            unsup_x=torch.cat((un_x1,un_x2)) # unsup_x.shape=(2*unsup_size, 3, 228)
+            un_logit0,un_logit1,un_logit2=self.forward(unsup_x) # logit_i means aixs=i
+            un_logit01,un_logit02=un_logit0.chunk(2) # logit_i means aixs=i, sup_idx=j
+            un_logit11,un_logit12=un_logit1.chunk(2) # logit_i means aixs=i, sup_idx=j
+            un_logit21,un_logit22=un_logit2.chunk(2) # logit_i means aixs=i, sup_idx=j
+            un_logit0=(torch.softmax(un_logit01,dim=-1) + torch.softmax(un_logit02,dim=-1))/2 # average logit of 2 output of 0th model/axis
+            un_logit1=(torch.softmax(un_logit11,dim=-1) + torch.softmax(un_logit12,dim=-1))/2 # average logit of 2 output of 1st model/axis
+            un_logit2=(torch.softmax(un_logit21,dim=-1) + torch.softmax(un_logit22,dim=-1))/2 # average logit of 2 output of 2nd model/axis
+            un_logit0,un_logit1,un_logit2 = un_logit0**(1/T),un_logit1**(1/T),un_logit2**(1/T)
+            un_y0,un_y1,un_y2= un_logit0/un_logit0.sum(dim=-1, keepdim=True).detach(),un_logit1/un_logit1.sum(dim=-1, keepdim=True).detach(),un_logit2/un_logit2.sum(dim=-1, keepdim=True).detach()
+            sup_y_onehot=one_hot(sup_y,un_logit0.shape[-1])
+        
+        input_x=torch.cat((sup_x,un_x1,un_x2)) # (sup_size+2*unsup_size, 3, 228) -> (sup_size+2*unsup_size, 3, 10)
+        un_y=torch.stack((un_y0,un_y1,un_y2),dim=1) # (unsup_size, 3, 10)
+        sup_y_onehot=torch.stack((sup_y_onehot,sup_y_onehot,sup_y_onehot),dim=1) # (unsup_size, 3, 10)
+        input_y=torch.cat((sup_y_onehot.expand(sup_y_onehot.shape[0],3,sup_y_onehot.shape[-1]),un_y,un_y)) # (sup_size+2*unsup_size, 3, 10)
+        mixed_x, mixed_y, lam = mixup_one_target(input_x, input_y,
+                                            self.conf.arch.alpha,
+                                            self.device,
+                                            is_bias=True)
+        
+        mixed_logit0,mixed_logit1,mixed_logit2 = self.forward(mixed_x) # ith model/axis pred, (size,228)
+        sup_num=sup_x.shape[0]
+        l0=-torch.mean(torch.sum(mixed_y[:sup_num,0,:]* F.log_softmax(mixed_logit0[:sup_num],dim=-1), dim=-1))
+        l1=-torch.mean(torch.sum(mixed_y[:sup_num,1,:]* F.log_softmax(mixed_logit1[:sup_num],dim=-1), dim=-1))
+        l2=-torch.mean(torch.sum(mixed_y[:sup_num,2,:]* F.log_softmax(mixed_logit2[:sup_num],dim=-1), dim=-1))
+        
+        mixed_prob0=torch.softmax(mixed_logit0,dim=-1)
+        mixed_prob1=torch.softmax(mixed_logit1,dim=-1)
+        mixed_prob2=torch.softmax(mixed_logit2,dim=-1)
+        if self.conf.semi:
+            u0 = F.mse_loss(mixed_prob0[sup_num:], mixed_y[sup_num:,0,:])
+            u1= F.mse_loss(mixed_prob1[sup_num:], mixed_y[sup_num:,1,:])
+            u2= F.mse_loss(mixed_prob2[sup_num:], mixed_y[sup_num:,2,:])
+            
+            u0+=F.mse_loss(mixed_prob0[sup_num:], (mixed_y[sup_num:,1,:]+mixed_y[sup_num:,2,:])/2)
+            u1+=F.mse_loss(mixed_prob1[sup_num:], (mixed_y[sup_num:,0,:]+mixed_y[sup_num:,2,:])/2)
+            u2+=F.mse_loss(mixed_prob2[sup_num:], (mixed_y[sup_num:,0,:]+mixed_y[sup_num:,1,:])/2)
+            
+            l0+=rampup(self.current_epoch)*u0*self.conf.arch.usp_weight
+            l1+=rampup(self.current_epoch)*u1*self.conf.arch.usp_weight
+            l2+=rampup(self.current_epoch)*u2*self.conf.arch.usp_weight
+            
+        loss=[l0,l1,l2]
+        for i,l in zip(range(3),loss):
+            if batch_idx%100==0:
+                self.log({f'train{i}_loss':l.item()})
+            optimizers[i].zero_grad()
+            l.backward()
+            optimizers[i].step()
+                
+        
+        return {'loss':loss,'pred':torch.stack((mixed_logit0,mixed_logit1,mixed_logit2),dim=1),'y':mixed_y.max(dim=-1)[1]}
+    
+    def on_train_batch_end(self, outputs, batch, batch_idx):
+        pred,y=outputs['pred'],outputs['y']
+        for i in range(3):
+            pi,mi=pred[:,i,:],self.train_metrics[i]
+            metrics=mi(pi,y[:,i])
+            if batch_idx%100==0:
+                self.log(metrics)
+        
+    

@@ -46,9 +46,9 @@ class Arch(BaseModel):
             un_logit=(torch.softmax(un_logit1,dim=-1) + torch.softmax(un_logit2,dim=-1))/2
             un_logit = un_logit**(1/T)
             un_y= un_logit/un_logit.sum(dim=-1, keepdim=True).detach()
-            sup_y=one_hot(sup_y,un_logit.shape[-1])
+            sup_y_onehot=one_hot(sup_y,un_logit.shape[-1])
         input_x = torch.cat([sup_x, un_x1, un_x2])
-        input_y = torch.cat([sup_y, un_y, un_y])
+        input_y = torch.cat([sup_y_onehot, un_y, un_y])
         ## forward
         mixed_x, mixed_y, lam = mixup_one_target(input_x, input_y,
                                                     self.conf.arch.alpha,
@@ -60,15 +60,15 @@ class Arch(BaseModel):
         
         
         loss=-torch.mean(torch.sum(mixed_y[:sup_num]* F.log_softmax(mixed_outputs[:sup_num],dim=-1), dim=-1))
-        
+        mixed_prob=torch.softmax(mixed_outputs,dim=-1)
         if self.conf.semi:
-            unsup_loss = F.mse_loss(torch.softmax(mixed_outputs[sup_num:],dim=-1), mixed_y[sup_num:])
+            unsup_loss = F.mse_loss(mixed_prob[sup_num:], mixed_y[sup_num:])
             loss+=rampup(self.current_epoch)*unsup_loss*self.conf.arch.usp_weight
             
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        return {'loss':loss.item(),'pred':mixed_outputs[:sup_num],'y':sup_y}
+        return {'loss':loss.item(),'pred':mixed_outputs,'y':mixed_y.max(dim=-1)[1]}
     
     def pred_to_onehot(self,pred):
         return F.one_hot(pred.argmax(dim=1),num_classes=self.conf.dataset.num_classes)

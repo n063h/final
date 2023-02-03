@@ -8,7 +8,7 @@ notes:
 seed: 42
 label_ratio: 0.01
 min_epochs: 20
-max_epochs: 40
+max_epochs: 80
 
 semi: True
 num_workers: 8

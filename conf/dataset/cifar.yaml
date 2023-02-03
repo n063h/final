@@ -1,8 +1,8 @@
 name: cifar
 num_classes: 10
-sup_size: 1024
-unsup_size: 1024
-eval_size: 1024
+sup_size: 64
+unsup_size: 64
+eval_size: 2048
 lr: 0.1
 w_augs:
 s_augs:

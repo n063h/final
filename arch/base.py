@@ -123,7 +123,8 @@ class BaseModel():
     def on_train_batch_end(self, outputs, batch, batch_idx):
         pred,y=outputs['pred'],outputs['y']
         metrics=self.train_metrics(pred,y)
-        self.log(metrics)
+        if batch_idx%10==0:
+            self.log(metrics)
         self.ema.update()
         
     def on_train_epoch_end(self,lr_schedulers) -> None:

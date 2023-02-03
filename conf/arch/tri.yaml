@@ -1,5 +1,5 @@
 name: tri
-usp_weight: 1
-threshold: 0.95
+temperature: 0.5
+usp_weight: 30
+alpha: 1.0
 aug_type: w_ww  # can be {e/w}_{ew/ww/ws} 
-temperature: 1

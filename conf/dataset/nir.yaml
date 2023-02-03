@@ -1,7 +1,7 @@
 name: nir
 num_classes: 10
-sup_size: 2048
-unsup_size: 2048
+sup_size: 128
+unsup_size: 128
 eval_size: 2048
 lr: 0.01
 

@@ -46,15 +46,15 @@ def main(conf : DictConfig) -> None:
         train(conf)
         wandb.finish()
     else:
-        try:
-            train(conf)
-        except Exception as e:
-            import pdb,traceback
+        # try:
+        #     train(conf)
+        # except Exception as e:
+        #     import pdb,traceback
             
-            traceback.print_exc()
-            pdb.set_trace()
-            raise e
-        # train(conf)
+        #     traceback.print_exc()
+        #     pdb.set_trace()
+        #     raise e
+        train(conf)
     
     
     
