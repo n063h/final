@@ -5,6 +5,8 @@ from utils.ramps import exp_rampup
 from .base import BaseModel
 import torch.nn.functional as F
 
+def consistency_loss(p,q):
+    return F.mse_loss(F.softmax(p,1,dim=-1), F.softmax(q,1,dim=-1))
 
 rampup=exp_rampup(40)
 
@@ -23,7 +25,7 @@ class Arch(BaseModel):
             with torch.no_grad():
                 un_pred1 = self.model(un_x1).detach()
                 un_pred2 = self.model(un_x2).detach()
-            unsup_loss=F.mse_loss(un_pred1,un_pred2)
+            unsup_loss=consistency_loss(un_pred1,un_pred2)
             self.log({'unsup_loss':unsup_loss.item()})
             loss+=rampup(self.current_epoch)*unsup_loss
         optimizer.zero_grad()
