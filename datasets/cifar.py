@@ -19,9 +19,11 @@ class Dataset(BaseDataset):
                             std = [0.2023, 0.1994, 0.2010])
         
         weak = transforms.Compose([
-            transforms.RandomHorizontalFlip(),
             transforms.Pad(2, padding_mode='reflect'),
+            transforms.ColorJitter(brightness=0.4, contrast=0.4,
+                                saturation=0.4, hue=0.1),
             transforms.RandomCrop(32),
+            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(**channel_stats)
         ])
