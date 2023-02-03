@@ -50,10 +50,10 @@ def main(conf : DictConfig) -> None:
             train(conf)
         except Exception as e:
             import pdb,traceback
-            pdb.set_trace()
+            
             traceback.print_exc()
-            print(e)
-            pass
+            pdb.set_trace()
+            raise e
         # train(conf)
     
     
