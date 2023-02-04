@@ -7,6 +7,7 @@ from arch.base import BaseModel
 from utils.base import Config, Timer
 from utils.ema import EMA
 from utils.metrics import get_multiclass_acc_metrics
+from .base import do_nothing
 
 
 class Arch(BaseModel):
@@ -14,7 +15,11 @@ class Arch(BaseModel):
         self.models=model
         self.conf=conf
         self.device=device
-        
+        self.global_step=0
+        if conf.name!='test_train':
+            self.log=wandb.log
+        else:
+            self.log=print
         metrics=get_multiclass_acc_metrics(conf.dataset.num_classes,device)
         self.train_metrics=[metrics.clone(prefix=f'train{i}_') for i in range(3)]
         self.val_metrics=[metrics.clone(prefix=f'val{i}_') for i in range(3)]

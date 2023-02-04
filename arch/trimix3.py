@@ -110,8 +110,7 @@ class Arch(_Arch):
             
         loss=[l0,l1,l2]
         for i,l in zip(range(3),loss):
-            if batch_idx%100==0:
-                self.log({f'train{i}_loss':l.item()})
+            self.log({f'train{i}_loss':l.item()})
             optimizers[i].zero_grad()
             l.backward()
             optimizers[i].step()
@@ -124,7 +123,7 @@ class Arch(_Arch):
         for i in range(3):
             pi,mi=pred[:,i,:],self.train_metrics[i]
             metrics=mi(pi,y[:,i])
-            if batch_idx%100==0:
-                self.log(metrics)
+            self.log(metrics)
+                
         
     

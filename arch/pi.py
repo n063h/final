@@ -23,7 +23,7 @@ class Arch(BaseModel):
         if self.conf.semi:
             un_x1,un_x2=un_x1.to(device),un_x2.to(device)
             with torch.no_grad():
-                un_pred1 = self.model(un_x1).detach()
+                un_pred1 = self.model(un_x1)
                 un_pred2 = self.model(un_x2).detach()
             unsup_loss=consistency_loss(un_pred1,un_pred2)
             self.log({'unsup_loss':unsup_loss.item()})

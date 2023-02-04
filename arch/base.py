@@ -11,6 +11,8 @@ from utils.metrics import get_multiclass_acc_metrics
 from tqdm import tqdm
 from tqdm.contrib import tzip,tenumerate
 
+do_nothing=lambda x:None
+
 class BaseModel():
     def __init__(self,model:nn.Module,conf:Config,device,*args,**kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -19,8 +21,8 @@ class BaseModel():
         self.ema.register()
         self.conf=conf
         self.device=device
-        self.log=print if conf.name=='test_train' else wandb.log
-        
+        self.global_step=0
+        self.log=wandb.log if conf.name!='test_train' else print
         metrics=get_multiclass_acc_metrics(conf.dataset.num_classes,device)
         self.train_metrics=metrics.clone(prefix='train_')
         self.val_metrics=metrics.clone(prefix='val_')
@@ -86,15 +88,15 @@ class BaseModel():
             
     def training_epoch(self,train_dataloader,optimizers,epoch):
         sup_loader,unlab_loader=train_dataloader
-        idx=0
         if len(sup_loader)<len(unlab_loader):
             tz=tzip(cycle(sup_loader), unlab_loader, total =len(unlab_loader))
         else:
             tz=tzip(sup_loader, cycle(unlab_loader), total =len(sup_loader))
         for idx,batch in enumerate(tz):
+            self.global_step+=1
             output=self.training_step(batch,idx,optimizers)
             self.on_train_batch_end(output,batch,idx)
-            # idx+=1
+            
             
         
         
@@ -123,8 +125,7 @@ class BaseModel():
     def on_train_batch_end(self, outputs, batch, batch_idx):
         pred,y=outputs['pred'],outputs['y']
         metrics=self.train_metrics(pred,y)
-        if batch_idx%10==0:
-            self.log(metrics)
+        self.log(metrics)
         self.ema.update()
         
     def on_train_epoch_end(self,lr_schedulers) -> None:

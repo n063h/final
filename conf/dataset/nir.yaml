@@ -9,6 +9,8 @@ axis:
 dim_aug: random # dim_aug can be all, random, same or different
 alpha: 0
 beta: 0
+dropout: True
+bn: True
 w_augs:
   - name: jitter
     alpha: 0.674
@@ -29,5 +31,3 @@ s_augs:
   - name: scaling
     alpha: 0.524
     beta: 0.092
-dropout: True
-bn: True

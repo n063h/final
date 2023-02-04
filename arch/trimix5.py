@@ -44,11 +44,12 @@ def compute_kl_loss( p, q):
     loss = (p_loss + q_loss) / 2
     return loss
 
+def ce_loss(logit,y):
+    return -torch.mean(torch.sum(y* F.log_softmax(logit,dim=-1), dim=-1))
 
-
-# pi + + mixed_prob psudo-label
-# CE + MSE + CE
-# use sum prob of p/q to compute MSE loss 
+# pi + R-Drop
+# CE + KL / MSE + KL
+# use all sets of p/q to compute MSE loss and Hx
 class Arch(_Arch):
         
     def forward(self,x):
@@ -86,44 +87,43 @@ class Arch(_Arch):
                                             self.device,
                                             is_bias=True)
         
-        mixed_logit0,mixed_logit1,mixed_logit2 = self.forward(mixed_x) # ith model/axis pred, (size,228)
-        sup_num=sup_x.shape[0]
-        l0=-torch.mean(torch.sum(mixed_y[:sup_num,0,:]* F.log_softmax(mixed_logit0[:sup_num],dim=-1), dim=-1))
-        l1=-torch.mean(torch.sum(mixed_y[:sup_num,1,:]* F.log_softmax(mixed_logit1[:sup_num],dim=-1), dim=-1))
-        l2=-torch.mean(torch.sum(mixed_y[:sup_num,2,:]* F.log_softmax(mixed_logit2[:sup_num],dim=-1), dim=-1))
+        mixed_logit00,mixed_logit01,mixed_logit02 = self.forward(mixed_x) # ith model/axis pred, (size,228)
+        mixed_logit10,mixed_logit11,mixed_logit12 = self.forward(mixed_x) # ith model/axis pred, (size,228)
+        kl_loss0= compute_kl_loss(mixed_logit00, mixed_logit10)
+        kl_loss1= compute_kl_loss(mixed_logit01, mixed_logit11)
+        kl_loss2= compute_kl_loss(mixed_logit02, mixed_logit12)
         
-        mixed_prob0=torch.softmax(mixed_logit0,dim=-1)
-        mixed_prob1=torch.softmax(mixed_logit1,dim=-1)
-        mixed_prob2=torch.softmax(mixed_logit2,dim=-1)
+        sup_num=sup_x.shape[0]
+        l0=ce_loss(mixed_logit00[:sup_num],mixed_y[:sup_num,0,:])+ce_loss(mixed_logit10[:sup_num],mixed_y[:sup_num,0,:])/2+kl_loss0*4
+        l1=ce_loss(mixed_logit01[:sup_num],mixed_y[:sup_num,1,:])+ce_loss(mixed_logit11[:sup_num],mixed_y[:sup_num,1,:])/2+kl_loss1*4
+        l2=ce_loss(mixed_logit02[:sup_num],mixed_y[:sup_num,2,:])+ce_loss(mixed_logit12[:sup_num],mixed_y[:sup_num,2,:])/2+kl_loss2*4
+        
+        mixed_prob00=torch.softmax(mixed_logit00,dim=-1)
+        mixed_prob01=torch.softmax(mixed_logit01,dim=-1)
+        mixed_prob02=torch.softmax(mixed_logit02,dim=-1)
+        mixed_prob10=torch.softmax(mixed_logit10,dim=-1)
+        mixed_prob11=torch.softmax(mixed_logit11,dim=-1)
+        mixed_prob12=torch.softmax(mixed_logit12,dim=-1)
         if self.conf.semi:
-            u0 = F.mse_loss(mixed_prob0[sup_num:], mixed_y[sup_num:,0,:])
-            u1= F.mse_loss(mixed_prob1[sup_num:], mixed_y[sup_num:,1,:])
-            u2= F.mse_loss(mixed_prob2[sup_num:], mixed_y[sup_num:,2,:])
-            
-            joint0_prob,joint0_label=(mixed_y[sup_num:,1,:]+mixed_y[sup_num:,2,:]).max(dim=-1)
-            joint1_prob,joint1_label=(mixed_y[sup_num:,0,:]+mixed_y[sup_num:,2,:]).max(dim=-1)
-            joint2_prob,joint2_label=(mixed_y[sup_num:,0,:]+mixed_y[sup_num:,1,:]).max(dim=-1)
-            mask0=joint0_prob>self.conf.arch.threshold
-            mask1=joint1_prob>self.conf.arch.threshold
-            mask2=joint2_prob>self.conf.arch.threshold  
-            
-            u0+=F.cross_entropy(mixed_logit0[sup_num:][mask0],joint0_label[mask0])
-            u1+=F.cross_entropy(mixed_logit1[sup_num:][mask1],joint1_label[mask1])
-            u2+=F.cross_entropy(mixed_logit2[sup_num:][mask2],joint2_label[mask2])
-            
+            u0= (F.mse_loss(mixed_prob00[sup_num:], mixed_y[sup_num:,0,:])+F.mse_loss(mixed_prob10[sup_num:], mixed_y[sup_num:,0,:]))/2
+            u1= (F.mse_loss(mixed_prob01[sup_num:], mixed_y[sup_num:,1,:])+F.mse_loss(mixed_prob11[sup_num:], mixed_y[sup_num:,1,:]))/2
+            u2= (F.mse_loss(mixed_prob02[sup_num:], mixed_y[sup_num:,2,:])+F.mse_loss(mixed_prob12[sup_num:], mixed_y[sup_num:,2,:]))/2
             l0+=rampup(self.current_epoch)*u0*self.conf.arch.usp_weight
             l1+=rampup(self.current_epoch)*u1*self.conf.arch.usp_weight
             l2+=rampup(self.current_epoch)*u2*self.conf.arch.usp_weight
             
         loss=[l0,l1,l2]
-        for i,l in zip(range(3),loss):
-            self.log({f'train{i}_loss':l.item()})
-            optimizers[i].zero_grad()
-            l.backward()
-            optimizers[i].step()
+        optimizers[2].zero_grad()
+        l2.backward()
+        optimizers[2].step()
+        # for i,l in zip(range(3),loss):
+        #     self.log({f'train{i}_loss':l.item()})
+        #     optimizers[i].zero_grad()
+        #     l.backward()
+        #     optimizers[i].step()
                 
         
-        return {'loss':loss,'pred':torch.stack((mixed_logit0,mixed_logit1,mixed_logit2),dim=1),'y':mixed_y.max(dim=-1)[1]}
+        return {'loss':loss,'pred':torch.stack((mixed_logit00,mixed_logit01,mixed_logit02),dim=1),'y':mixed_y.max(dim=-1)[1]}
     
     def on_train_batch_end(self, outputs, batch, batch_idx):
         pred,y=outputs['pred'],outputs['y']

@@ -96,7 +96,7 @@ class Arch(_Arch):
         mixed_prob1=torch.softmax(mixed_logit1,dim=-1)
         mixed_prob2=torch.softmax(mixed_logit2,dim=-1)
         if self.conf.semi:
-            u0 = F.mse_loss(mixed_prob0[sup_num:], mixed_y[sup_num:,0,:])
+            u0 =F.mse_loss(mixed_prob0[sup_num:], mixed_y[sup_num:,0,:])
             u1= F.mse_loss(mixed_prob1[sup_num:], mixed_y[sup_num:,1,:])
             u2= F.mse_loss(mixed_prob2[sup_num:], mixed_y[sup_num:,2,:])
             
@@ -110,8 +110,7 @@ class Arch(_Arch):
             
         loss=[l0,l1,l2]
         for i,l in zip(range(3),loss):
-            if batch_idx%100==0:
-                self.log({f'train{i}_loss':l.item()})
+            self.log({f'train{i}_loss':l.item()})
             optimizers[i].zero_grad()
             l.backward()
             optimizers[i].step()
@@ -124,7 +123,7 @@ class Arch(_Arch):
         for i in range(3):
             pi,mi=pred[:,i,:],self.train_metrics[i]
             metrics=mi(pi,y[:,i])
-            if batch_idx%100==0:
-                self.log(metrics)
+            self.log(metrics)
+                
         
     

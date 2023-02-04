@@ -139,7 +139,7 @@ class ResNet_d(nn.Module):
         # self.fc1 = nn.Linear(2304, 256)
         self.fc1 = nn.Linear(6912, 256)
         self.relu2 = nn.ReLU(inplace=True)
-        self.dp=nn.Dropout(p=0.2)
+        self.dp=nn.Dropout(p=0.5)
         self.fc3 = nn.Linear(256, num_classes)
 
         # self.dropout1 = nn.Dropout(p=0.3)
