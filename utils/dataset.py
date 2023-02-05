@@ -175,20 +175,22 @@ class TransformEachDim:
         
     def __call__(self, _x):
         base,addition=self.base_transform,self.addition_transform
-        if self.dim_aug=='all':
-            transform=transforms.Compose([base,addition])
+        if self.dim_aug=='all' or not addition:
+            transform=transforms.Compose([base,addition]) if addition else base
             for i in range(_x.shape[0]):
                 _x[i]=transform(_x[i])
         else:
-            if self.dim_aug=='different':
+            transform_for_each_dim=[]
+            if addition and self.dim_aug=='different':
                 assert _x.shape[0]<=len(addition)
-                transform=np.random.choice(addition,_x.shape[0],replace=False)
-            elif self.dim_aug=='same':
-                transform=np.random.choice(addition,1).tolist()*_x.shape[0]
-            elif self.dim_aug=='random':
-                transform=np.random.choice(addition,_x.shape[0],replace=True)
-            for i,t in zip(range(_x.shape[0]), transform):
-                    _x[i] = t(_x[i])
+                transform_for_each_dim=np.random.choice(addition,_x.shape[0],replace=False)
+            elif addition and self.dim_aug=='same':
+                transform_for_each_dim=np.random.choice(addition,1).tolist()*_x.shape[0]
+            elif addition and self.dim_aug=='random':
+                transform_for_each_dim=np.random.choice(addition,_x.shape[0],replace=True)
+            for i,t in zip(range(_x.shape[0]), transform_for_each_dim):
+                    transform=transforms.Compose([base,t])
+                    _x[i] = transform(_x[i])
         return _x
 
 

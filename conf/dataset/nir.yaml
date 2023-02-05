@@ -12,15 +12,15 @@ beta: 0
 dropout: True
 bn: True
 w_augs:
-  - name: jitter
-    alpha: 0.674
-    beta: 0.259
-  - name: magwarp
-    alpha: 0.02
-    beta: 0
-  - name: scaling
-    alpha: 0.524
-    beta: 0.092
+  # - name: jitter
+  #   alpha: 0.674
+  #   beta: 0.259
+  # - name: magwarp
+  #   alpha: 0.02
+  #   beta: 0
+  # - name: scaling
+  #   alpha: 0.524
+  #   beta: 0.092
 s_augs:
   - name: jitter
     alpha: 0.674

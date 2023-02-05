@@ -47,6 +47,18 @@ class BaseModel():
         for ls,state in zip(lr_schedulers,l):
             ls.load_state_dict(state)
     
+    def early_stop(self,acc):
+        if self.conf.label_ratio<=0.01:
+            if self.current_epoch>5 and acc<0.2:
+                return True
+        elif self.conf.label_ratio<=0.1:
+            if self.current_epoch>5 and acc<0.4:
+                return True
+        else:
+            if self.current_epoch>5 and acc<0.6:
+                return True
+        return False
+    
     def fit(self,dataset:BaseDataset):
         dataset.prepare_transforms()
         dataset.prepare_data()
@@ -74,7 +86,9 @@ class BaseModel():
                 self.on_validation_epoch_start(epoch)
                 self.validation_epoch(val_dataloader,epoch) # forward, loss , optimizer
                 val_acc=self.on_validation_epoch_end() # lr_scheduler
-                
+                if self.early_stop(val_acc):
+                    print(f"{self.current_epoch} epoch, val_acc {val_acc}, STOP!")
+                    return
                 if val_acc>self.best['val_acc']:
                     self.best={
                         'val_acc':val_acc,

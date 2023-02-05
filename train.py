@@ -20,8 +20,8 @@ from torch import nn
 
 def train(conf):
     conf.device=get_pytorch_device()
-    conf.dataset.w_augs=build_augs(conf.dataset.w_augs)
-    conf.dataset.s_augs=build_augs(conf.dataset.s_augs)
+    conf.dataset.w_augs=build_augs(conf.dataset.w_augs,conf.alpha,conf.beta)
+    conf.dataset.s_augs=build_augs(conf.dataset.s_augs,conf.alpha,conf.beta)
     dataset:LightningDataModule=import_module('datasets.'+conf.dataset.name).Dataset(conf)
     model:nn.Module=import_module('models.'+conf.model.name).Net(conf,conf.device)
     arch=import_module('arch.'+conf.arch.name).Arch(model=model,conf=conf,device=conf.device)

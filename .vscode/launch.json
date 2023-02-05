@@ -8,19 +8,21 @@
             "name": "Python: Current File",
             "type": "python",
             "env": {
-                "PYTHONPYTH":"${workspaceFolder}",
-                "CUDA_VISIBLE_DEVICES":"0"
+                "PYTHONPYTH": "${workspaceFolder}",
+                "CUDA_VISIBLE_DEVICES": "0"
             },
             "args": [
                 "project=temp",
                 "name=test_train",
-                "label_ratio=0.1",
-                "dataset=nir",
-                // "dataset.axis=0",
+                "label_ratio=0.01",
+                "dataset=cls10_magwarp",
+                "dataset.axis=0",
                 "model=resnet1d",
                 "model.name=3resnet1d",
-                "arch=tri",
-                "arch.name=trimix5",
+                "arch=mixmatch",
+                // "arch.name=trimix5",
+                "alpha=0.367",
+                "beta=0.891"
             ],
             "python": "/root/miniconda3/envs/py38/bin/python",
             "request": "launch",

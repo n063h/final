@@ -14,6 +14,8 @@ semi: True
 num_workers: 8
 resume: False
 
+alpha:
+beta:
 
 default_root_dir: '${oc.env:HOME}/autodl-tmp/checkpoints'
 log_dir: '${oc.env:HOME}/tf-logs'
